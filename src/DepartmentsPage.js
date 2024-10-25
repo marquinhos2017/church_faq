@@ -30,7 +30,7 @@ const WelcomeMessage = styled.h1`
 
 const DepartmentGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, 1fr); // Duas colunas
+  grid-template-columns: repeat(2, 1fr); // Duas colunas
   gap: 36px;
   width: 100%;
   max-width: 600px;
