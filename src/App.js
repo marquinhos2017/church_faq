@@ -11,6 +11,14 @@ const GlobalStyle = createGlobalStyle`
   * {
     font-family: 'Montserrat', sans-serif;
   }
+
+  input, textarea {
+    font-size: 16px; /* Aumente o tamanho da fonte para evitar zoom */
+    -webkit-text-size-adjust: 100%; /* Impede o ajuste do tamanho do texto no iOS */
+  -moz-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  }
 `;
 
 const App = () => {
