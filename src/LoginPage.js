@@ -48,12 +48,9 @@ const LoginPage = ({ setUser }) => {
         if (error) {
             setError('Usuário ou senha inválidos.');
         } else {
+            localStorage.setItem('user', JSON.stringify(user)); // Armazena o usuário no localStorage
             setUser(user);
-            if (user.role === 'admin') {
-                navigate('/admin/departments');
-            } else {
-                navigate('/user/departments');
-            }
+            navigate(user.role === 'admin' ? '/admin/departments' : '/user/departments');
         }
     };
 
