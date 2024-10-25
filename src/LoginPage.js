@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
@@ -36,6 +36,15 @@ const LoginPage = ({ setUser }) => {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+            const user = JSON.parse(storedUser);
+            setUser(user);
+            navigate(user.role === 'admin' ? '/admin/departments' : '/user/departments');
+        }
+    }, [navigate, setUser]);
 
     const handleLogin = async () => {
         const { data: user, error } = await supabase

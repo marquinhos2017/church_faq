@@ -5,6 +5,13 @@ import DepartmentsPage from './DepartmentsPage';
 import FAQPage from './FAQPagea';
 import AddQuestionPage from './AddQuestionPage';
 import AnswerQuestionPage from './AnswerQuestionPage';
+import { createGlobalStyle } from 'styled-components';
+
+const GlobalStyle = createGlobalStyle`
+  * {
+    font-family: 'Montserrat', sans-serif;
+  }
+`;
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -17,21 +24,25 @@ const App = () => {
   }, []);
 
   return (
-    <Router>
-      <Routes>
-        {/* Exibe LoginPage se o user não está logado */}
-        <Route path="/" element={<LoginPage setUser={setUser} />} />
-        {user && (
-          <>
-            <Route path="/admin/departments" element={<DepartmentsPage user={user} />} />
-            <Route path="/user/departments" element={<DepartmentsPage user={user} />} />
-            <Route path="/faq/:id" element={<FAQPage user={user} />} />
-            <Route path="/add-question" element={<AddQuestionPage />} />
-            <Route path="/answer-question/:questionId" element={<AnswerQuestionPage />} />
-          </>
-        )}
-      </Routes>
-    </Router>
+    <>
+      <GlobalStyle />
+      <Router>
+        <Routes>
+          {/* Exibe LoginPage se o user não está logado */}
+          {!user ? (
+            <Route path="/" element={<LoginPage setUser={setUser} />} />
+          ) : (
+            <>
+              <Route path="/admin/departments" element={<DepartmentsPage user={user} setUser={setUser} />} />
+              <Route path="/user/departments" element={<DepartmentsPage user={user} setUser={setUser} />} />
+              <Route path="/faq/:id" element={<FAQPage user={user} />} />
+              <Route path="/add-question" element={<AddQuestionPage />} />
+              <Route path="/answer-question/:questionId" element={<AnswerQuestionPage />} />
+            </>
+          )}
+        </Routes>
+      </Router>
+    </>
   );
 };
 

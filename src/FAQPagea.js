@@ -1,14 +1,32 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from './supabaseClient';
-import { Link, useParams, useNavigate } from 'react-router-dom'; // Importa useNavigate para navegação
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { FiChevronDown, FiChevronUp } from 'react-icons/fi';
+import { FiChevronDown, FiChevronUp, FiSearch, FiPlus } from 'react-icons/fi';
 
-// Estilos
 const Container = styled.div`
   padding: 20px;
-  background-color: #f4f4f9;
+  background-color: #ffffff; // Fundo branco do app
   min-height: 100vh;
+  font-family: 'Montserrat', sans-serif; // Fonte Montserrat
+  padding-bottom: 80px; // Espaço para o botão flutuante
+`;
+
+const SearchContainer = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  background-color: #fff;
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+`;
+
+const SearchInput = styled.input`
+  border: none;
+  outline: none;
+  width: 100%;
+  margin-left: 10px;
 `;
 
 const QuestionContainer = styled.div`
@@ -28,7 +46,7 @@ const QuestionHeader = styled.div`
 
 const QuestionText = styled.h3`
   margin: 0;
-  color: #333;
+  color: #0C0C0C; // Cor principal
   font-size: 18px;
 `;
 
@@ -37,26 +55,50 @@ const AnswerText = styled.div`
   padding: 10px 0 0;
 `;
 
-const AddQuestionInput = styled.input`
+const AddQuestionContainer = styled.div`
+  position: fixed; // Fixa o container na tela
+  bottom: 20px; // Distância do fundo
+  left: 20px; // Distância da esquerda
+  right: 20px; // Distância da direita
+  display: flex;
+  align-items: center;
+  background-color: #fff;
   padding: 10px;
-  border: 1px solid #ccc;
   border-radius: 5px;
-  margin-bottom: 10px;
-  width: calc(100% - 22px);
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+`;
+
+const AddQuestionInput = styled.input`
+  border: none;
+  outline: none;
+  width: 100%;
+  margin-left: 10px;
 `;
 
 const AddQuestionButton = styled.button`
-  background-color: rgb(111, 104, 221);
+  background-color: #F2613F; // Cor do botão Adicionar
   color: white;
   border: none;
   border-radius: 5px;
   padding: 10px;
-  width: 100%;
   cursor: pointer;
-  margin-bottom: 20px;
 
   &:hover {
-    background-color: rgb(91, 84, 181);
+    background-color: #9B3922; // Cor ao passar o mouse
+  }
+`;
+
+const LogoutButton = styled.button`
+  background-color: #FF4D4D; // Cor do botão de logout
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 10px;
+  cursor: pointer;
+  margin-top: 10px;
+
+  &:hover {
+    background-color: #C60000; // Cor ao passar o mouse
   }
 `;
 
@@ -76,10 +118,11 @@ const BackButton = styled.button`
 
 const FAQPage = ({ user }) => {
   const { id } = useParams();
-  const navigate = useNavigate(); // Inicializa o hook useNavigate para navegação
+  const navigate = useNavigate();
   const [questions, setQuestions] = useState([]);
   const [newQuestion, setNewQuestion] = useState('');
   const [expandedQuestions, setExpandedQuestions] = useState({});
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const fetchQuestions = async () => {
@@ -106,17 +149,22 @@ const FAQPage = ({ user }) => {
   const handleAddQuestion = async () => {
     if (!newQuestion.trim()) return;
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('questions')
-      .insert([{ question: newQuestion, department_id: id }]);
+      .insert([{ question: newQuestion, department_id: id }])
+      .select();
 
     if (error) {
-      console.error('Error adding question:', error);
-    } else {
-      setQuestions([...questions, { question: newQuestion, answer: null }]);
+      console.error('Erro ao adicionar pergunta:', error);
+    } else if (data && data.length > 0) {
+      if (user.role === 'admin' || data[0].answer) {
+        setQuestions([...questions, data[0]]);
+      }
       setNewQuestion('');
     }
   };
+
+
 
   const toggleQuestion = (questionId) => {
     setExpandedQuestions((prev) => ({
@@ -125,23 +173,28 @@ const FAQPage = ({ user }) => {
     }));
   };
 
+  const filteredQuestions = questions.filter((question) =>
+    question.question.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <Container>
-      <BackButton onClick={() => navigate(-1)}>Voltar</BackButton> {/* Botão de voltar */}
+      <BackButton onClick={() => navigate(-1)}>Voltar</BackButton>
 
-      <h2>Perguntas Frequentes</h2>
-      <AddQuestionInput
-        type="text"
-        value={newQuestion}
-        onChange={(e) => setNewQuestion(e.target.value)}
-        placeholder="Digite sua pergunta aqui..."
-      />
-      <AddQuestionButton onClick={handleAddQuestion}>
-        Adicionar Pergunta
-      </AddQuestionButton>
+      <h2 style={{ color: '#0C0C0C' }}>Perguntas Frequentes</h2> {/* Cor do título */}
 
-      {questions.length > 0 ? (
-        questions.map((question) => (
+      <SearchContainer>
+        <FiSearch color="#666" />
+        <SearchInput
+          type="text"
+          placeholder="Buscar perguntas..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </SearchContainer>
+
+      {filteredQuestions.length > 0 ? (
+        filteredQuestions.map((question) => (
           <QuestionContainer key={question.id}>
             <QuestionHeader onClick={() => toggleQuestion(question.id)}>
               <QuestionText>{question.question}</QuestionText>
@@ -162,6 +215,20 @@ const FAQPage = ({ user }) => {
       ) : (
         <p>Nenhuma pergunta encontrada.</p>
       )}
+
+      <AddQuestionContainer>
+        <FiPlus color="#666" />
+        <AddQuestionInput
+          type="text"
+          value={newQuestion}
+          onChange={(e) => setNewQuestion(e.target.value)}
+          placeholder="Digite sua pergunta aqui..."
+        />
+        <AddQuestionButton onClick={handleAddQuestion}>
+          Adicionar
+        </AddQuestionButton>
+      </AddQuestionContainer>
+
     </Container>
   );
 };
