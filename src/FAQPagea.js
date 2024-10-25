@@ -179,7 +179,9 @@ const FAQPage = ({ user }) => {
 
   return (
     <Container>
-      <BackButton onClick={() => navigate(-1)}>Voltar</BackButton>
+      <BackButton onClick={() => navigate(user.role === 'admin' ? '/admin/departments' : '/user/departments')}>
+        Voltar
+      </BackButton>
 
       <h2 style={{ color: '#0C0C0C' }}>Perguntas Frequentes</h2> {/* Cor do título */}
 

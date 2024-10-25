@@ -17,14 +17,14 @@ const Container = styled.div`
   font-family: 'Montserrat', sans-serif; // Fonte Montserrat
 `;
 
-const Title = styled.h2`
+const Title = styled.h3`
   color: #0C0C0C; // Título na cor principal
   margin-bottom: 24px; // Ajustado para dar mais espaço ao texto de boas-vindas
 `;
 
 const WelcomeMessage = styled.h1`
   color: #0C0C0C; // Cor do texto de boas-vindas
-  font-size: 42px;
+  font-size: 24px;
   margin-bottom: 42px; // Espaço entre a mensagem de boas-vindas e os departamentos
 `;
 
