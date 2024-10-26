@@ -28,94 +28,105 @@ const UploadButton = styled.input`
   margin-top: 10px;
 `;
 
+const VideoInput = styled.input`
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+`;
+
 const AnswerQuestionPage = () => {
     const { questionId } = useParams();
     const navigate = useNavigate();
     const [answer, setAnswer] = useState('');
     const [question, setQuestion] = useState('');
+    const [imageURL, setImageURL] = useState('');
+    const [videoURL, setVideoURL] = useState('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     useEffect(() => {
         const fetchQuestion = async () => {
-            setLoading(true);
             const { data, error } = await supabase
                 .from('questions')
                 .select('*')
                 .eq('id', questionId)
                 .single();
 
-            if (error) {
-                setError('Erro ao buscar a pergunta.');
-                console.error('Error fetching question:', error);
-            } else {
+            if (error) setError('Erro ao buscar a pergunta.');
+            else {
                 setQuestion(data.question);
                 setAnswer(data.answer || '');
+                setImageURL(data.image || '');
+                setVideoURL(data.video || '');
             }
             setLoading(false);
         };
-
         fetchQuestion();
     }, [questionId]);
 
-    const handleSubmit = async () => {
-        const { data, error } = await supabase
-            .from('questions')
-            .update({ answer, status: 'respondida' })
-            .eq('id', questionId);
-
-        if (error) {
-            console.error('Error updating answer:', error);
-            alert('Erro ao salvar a resposta.');
-        } else {
-            alert('Resposta salva com sucesso!');
-            setTimeout(async () => {
-                const updatedQuestion = await supabase
-                    .from('questions')
-                    .select('department_id')
-                    .eq('id', questionId)
-                    .single();
-
-                if (updatedQuestion.data) {
-                    navigate(`/faq/${updatedQuestion.data.department_id}`);
-                } else {
-                    console.warn('Não foi possível encontrar o department_id atualizado');
-                    alert('Não foi possível redirecionar. Tente novamente mais tarde.');
-                }
-            }, 3000);
-        }
-    };
-
     const handleImageUpload = async (event) => {
         const file = event.target.files[0];
-
         if (file) {
             const fileExt = file.name.split('.').pop();
-            const fileName = `${Date.now()}.${fileExt}`;
-            const { data, error } = await supabase.storage.from('images').upload(fileName, file);
+            const fileName = `${Date.now()}.${fileExt}`; // Gerar um nome único para o arquivo
+
+            // Faça upload do arquivo para o Supabase Storage
+            const { data, error } = await supabase.storage.from('image').upload(fileName, file);
 
             if (error) {
-                console.error('Erro ao fazer upload da imagem:', error);
-                alert('Erro ao carregar a imagem.');
+                console.error('Erro ao fazer upload da imagem:', error.message);
+                alert(`Erro ao carregar a imagem: ${error.message}`);
             } else {
-                const { publicURL, error: urlError } = supabase.storage.from('images').getPublicUrl(fileName);
+                console.log("Imagem carregada com sucesso:", data);
+
+                // Gere a URL pública da imagem usando o caminho correto
+                const { publicURL, error: urlError } = supabase.storage.from('image').getPublicUrl(data.path);
+                const link = supabase
+                    .storage
+                    .from('image')
+                    .getPublicUrl(data.path).data.publicUrl;
+                console.log(link);
                 if (urlError) {
-                    console.error('Erro ao obter URL da imagem:', urlError);
+                    console.error('Erro ao gerar URL pública:', urlError.message);
+                    alert('Erro ao gerar a URL pública.');
                 } else {
-                    // Adiciona a URL da imagem ao editor
-                    setAnswer((prev) => prev + `<img src="${publicURL}" alt="Imagem" />`);
+                    console.log("URL pública gerada:", publicURL); // Verifique a URL gerada
+                    setImageURL(link); // Atualize `imageURL` com a URL gerada
+                    setAnswer((prev) => prev + `<img src="${link}" alt="Imagem" />`); // Adicione a imagem ao campo de resposta
                 }
             }
         }
     };
 
-    if (loading) {
-        return <p>Carregando...</p>;
-    }
 
-    if (error) {
-        return <p>{error}</p>;
-    }
+
+
+    const handleSubmit = async () => {
+        console.log("Valor de imageURL no momento de envio:", imageURL); // Verifique `imageURL`
+        const { error } = await supabase
+            .from('questions')
+            .update({ answer, image: imageURL, video: videoURL, status: 'respondida' }) // Aqui você salva a URL na coluna image
+            .eq('id', questionId);
+
+        if (error) {
+            console.error('Erro ao salvar a resposta:', error);
+            alert('Erro ao salvar a resposta.');
+        } else {
+            alert('Resposta salva com sucesso!');
+            const { data: updatedQuestion } = await supabase
+                .from('questions')
+                .select('department_id')
+                .eq('id', questionId)
+                .single();
+
+            navigate(`/faq/${updatedQuestion.department_id}`);
+        }
+    };
+
+
+
 
     return (
         <EditorContainer>
@@ -123,6 +134,12 @@ const AnswerQuestionPage = () => {
             <p>{question}</p>
             <ReactQuill value={answer} onChange={setAnswer} />
             <UploadButton type="file" accept="image/*" onChange={handleImageUpload} />
+            <VideoInput
+                type="text"
+                placeholder="Link do vídeo (opcional)"
+                value={videoURL}
+                onChange={(e) => setVideoURL(e.target.value)}
+            />
             <Button onClick={handleSubmit}>Salvar Resposta</Button>
         </EditorContainer>
     );

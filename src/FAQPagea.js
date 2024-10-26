@@ -4,6 +4,36 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { FiChevronDown, FiChevronUp, FiSearch, FiPlus } from 'react-icons/fi';
 
+// Estilos do modal
+const Modal = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+`;
+
+const ModalContent = styled.div`
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  position: relative;
+`;
+
+const CloseButton = styled.button`
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+`;
+
 const Container = styled.div`
   padding: 20px;
   background-color: #ffffff; // Fundo branco do app
@@ -123,6 +153,8 @@ const FAQPage = ({ user }) => {
   const [newQuestion, setNewQuestion] = useState('');
   const [expandedQuestions, setExpandedQuestions] = useState({});
   const [searchTerm, setSearchTerm] = useState('');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedImage, setSelectedImage] = useState('');
 
   useEffect(() => {
     const fetchQuestions = async () => {
@@ -164,13 +196,21 @@ const FAQPage = ({ user }) => {
     }
   };
 
-
-
   const toggleQuestion = (questionId) => {
     setExpandedQuestions((prev) => ({
       ...prev,
       [questionId]: !prev[questionId],
     }));
+  };
+
+  const openModal = (image) => {
+    setSelectedImage(image);
+    setModalVisible(true);
+  };
+
+  const closeModal = () => {
+    setModalVisible(false);
+    setSelectedImage('');
   };
 
   const filteredQuestions = questions.filter((question) =>
@@ -200,14 +240,20 @@ const FAQPage = ({ user }) => {
           <QuestionContainer key={question.id}>
             <QuestionHeader onClick={() => toggleQuestion(question.id)}>
               <QuestionText>{question.question}</QuestionText>
+
               {expandedQuestions[question.id] ? <FiChevronUp /> : <FiChevronDown />}
             </QuestionHeader>
             {expandedQuestions[question.id] && (
-              <AnswerText
-                dangerouslySetInnerHTML={{
-                  __html: question.answer ? question.answer : 'Pergunta ainda não respondida.',
-                }}
-              />
+              <>
+                <AnswerText
+                  dangerouslySetInnerHTML={{
+                    __html: question.answer ? question.answer.replace(/<img[^>]*>/g, '') : 'Pergunta ainda não respondida.', // Remove tags de imagem
+                  }}
+                />
+                {question.image && ( // Mostra o botão se a imagem estiver presente
+                  <button onClick={() => openModal(question.image)}>Ver Imagem</button>
+                )}
+              </>
             )}
             {user.role === 'admin' && (
               <Link to={`/answer-question/${question.id}`}>Responder</Link>
@@ -231,6 +277,19 @@ const FAQPage = ({ user }) => {
         </AddQuestionButton>
       </AddQuestionContainer>
 
+      {/* Modal para exibir a imagem */}
+      {modalVisible && (
+        <Modal>
+          <ModalContent>
+            <CloseButton onClick={closeModal}>X</CloseButton>
+            <img src={selectedImage} alt="Imagem" style={{ maxWidth: '100%', maxHeight: '80vh' }} />
+          </ModalContent>
+        </Modal>
+      )}
+
+      <LogoutButton onClick={() => { /* Lógica de logout */ }}>
+        Sair
+      </LogoutButton>
     </Container>
   );
 };
